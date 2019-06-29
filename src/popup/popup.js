@@ -56,7 +56,7 @@ function getSavedPostsFromFeed() {
 
     username = data.user;
     localStorage.setItem('username', data.user);
-    localStorage.setItem('posts' + username, JSON.stringify(posts));
+    storage.setPosts(posts);
 
     updateCategorized();
   }).catch((err) => {
@@ -92,8 +92,6 @@ function updateCategorized() {
   }
 
   storage.setCategorizedPosts(categorizedPosts);
-
-  localStorage.setItem('lastUpdated' + username, new Date());
 
   initView(lastClickedCategory);
 }
@@ -149,7 +147,24 @@ function createPostElement(post) {
   const title = getPostTitle(post).replace(/"/g, "'");
   const permalink = post.permalink;
 
-  return `<div class="row editPost"><i title="Move post" class="fas fa-edit" id="${id}button"></i><div class="post ${title ? "" : "untitled"}" id="${id}" data-link="${permalink}">${title || "untitled"}</div></div>`;
+  const html = `<div class="row editPost"><i title="Move post" class="fas fa-edit" id="${id}button"></i><div class="post ${title ? "" : "untitled"}" id="${id}" data-link="${permalink}">${title || "untitled"}</div></div>`;
+  const element = document.createElement("div");
+  element.innerHTML = html;
+
+  const postElement = element.firstChild;
+
+  //adds onclick listeners to posts
+  postElement.querySelector(".post").addEventListener("click", function () {
+    var href = "http://reddit.com" + this.dataset.link;
+    chrome.tabs.create({ active: true, url: href });
+  });
+
+  //adds onclick listeners to editpost-buttons
+  postElement.querySelector(".fa-edit").addEventListener("click", function () {
+    editPostCategory(this.id.replace("button", ""));
+  });
+
+  return postElement;
 }
 
 function updateView(category) {
@@ -171,56 +186,14 @@ function updateView(category) {
   postContainer.innerHTML = "";
 
   if (category == "All posts") {
-    //adds posts to DOM
     for (var i = 0; i < categorizedPosts.length; i++) {
-      postContainer.innerHTML += createPostElement(categorizedPosts[i]);
+      postContainer.appendChild(createPostElement(categorizedPosts[i]));
     }
-
-    //adds onclick listeners to posts
-    for (var i = 0; i < categorizedPosts.length; i++) {
-      var s = categorizedPosts[i].id;
-      document.getElementById(categorizedPosts[i].id).addEventListener("click", function () {
-        var href = "http://reddit.com" + this.dataset.link;
-        chrome.tabs.create({ active: true, url: href });
-      });
-    }
-
-    //adds onclick listeners to editpost-buttons
-    for (var i = 0; i < categorizedPosts.length; i++) {
-      document.getElementById(categorizedPosts[i].id + "button").addEventListener("click", function () {
-        editPostCategory(this.id.replace("button", ""));
-      });
-    }
-
   } else {
-
-    //adds posts to DOM
     for (var i = 0; i < categorizedPosts.length; i++) {
-      if (categorizedPosts[i].category == category) {
-        postContainer.innerHTML += createPostElement(categorizedPosts[i]);
-      }
+      if (categorizedPosts[i].category !== category) continue 
+      postContainer.appendChild(createPostElement(categorizedPosts[i]));
     }
-
-    //adds onclick listeners to posts
-    for (var i = 0; i < categorizedPosts.length; i++) {
-      if (categorizedPosts[i].category == category) {
-        document.getElementById(categorizedPosts[i].id).addEventListener("click", function () {
-          var href = "http://reddit.com" + this.dataset.link;
-          chrome.tabs.create({ active: true, url: href });
-        });
-      }
-    }
-
-    //adds onclick listeners to editpost-buttons
-    for (var i = 0; i < categorizedPosts.length; i++) {
-      if (categorizedPosts[i].category == category) {
-        document.getElementById(categorizedPosts[i].id + "button").addEventListener("click", function () {
-          editPostCategory(this.id.replace("button", ""));
-        });
-
-      }
-    }
-
   }
 
   refreshLastUpdated();
@@ -259,7 +232,7 @@ function deletionConfirmed(category) {
     }
   }
 
-  localStorage.setItem('categories' + username, JSON.stringify(categories));
+  storage.setCategories(categories);
 
   initView("All posts");
 }
@@ -299,7 +272,7 @@ function movePost(id, category) {
 
   updateView(lastClickedCategory);
 
-  localStorage.setItem('categorizedPosts' + username, JSON.stringify(categorizedPosts));
+  storage.setCategorizedPosts(categorizedPosts);
 
   document.getElementById('movePostMenu').style.opacity = 0;
   document.getElementById('movePostMenu').style.visibility = "hidden";
@@ -319,7 +292,7 @@ function addFolder() {
 
   if (!categories.includes(value)) {
     categories.push(value);
-    localStorage.setItem('categories' + username, JSON.stringify(categories));
+    storage.setCategories(categories);
   }
 
   initView(lastClickedCategory);

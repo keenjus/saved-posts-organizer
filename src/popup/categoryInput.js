@@ -12,10 +12,10 @@ export default class CategoryInput {
     this.$categoryInput.style.opacity = 1;
     this.$categoryInput.style.width = "260px";
 
-    this.isVisible = true;
 
     setTimeout(() => {
       this.$categoryInput.focus();
+      this.isVisible = true;
     }, 500);
   }
 
@@ -24,10 +24,9 @@ export default class CategoryInput {
 
     this.$categoryInput.style.width = "0px";
 
-    this.isVisible = false;
-
     setTimeout(() => {
       this.$categoryInput.style.opacity = 0;
+      this.isVisible = false;
     }, 500);
   }
 
