@@ -5,6 +5,9 @@
 // categories         : the user's custom categories
 
 import './popup.css';
+import 'babel-polyfill';
+
+import reddit from "../reddit";
 
 var username = localStorage.getItem('username');
 
@@ -32,57 +35,25 @@ if (localStorage.getItem('categories' + username) != null) {
 document.getElementById("sync").addEventListener("click", getSavedPostsFromFeed);
 document.getElementById("addFolder").addEventListener("click", addFolder);
 
-function getRedditFeed(key) {
-  return fetch(`https://www.reddit.com/saved.json?feed=${key}`)
-    .then((res) => res.json())
-    .catch((error) => {
-      openErrorMenu("Couldn't get saved posts. Not logged into reddit.")
-    });
-}
-
 function getSavedPostsFromFeed() {
-  var user;
-
   document.getElementById('sync').classList.add("spin");
 
   posts = {}
 
-  fetch('https://www.reddit.com/prefs/feeds')
-    .then((res) => res.text())
-    .then((data) => {
-      var from = data.search('user=') + 5;
-      var to = data.search('">RSS');
-      user = data.substring(from, to);
+  reddit.getSavedPosts().then((data) => {
+    posts = data.posts.reduce((prev, curr, index) => {
+      prev[index] = curr;
+      return prev;
+    }, {});
 
-      from = data.search('feed=') + 5;
-      to = data.search('&amp;user=');
-      var key = data.substring(from, to);
-      return key;
-    })
-    .then((key) => getRedditFeed(key))
-    .then((data) => {
-      var content = data.data.children;
-
-      for (var i = 0; i < content.length; i++) {
-        //adds every fetched saved post to posts.
-        //traverses from bottom up, but saves first elements last. That is because,
-        //the most recent saved post is the first element in the JSON, and we want it to be last
-        //so we easier can push most recent post to the end of the lists
-        var ir = content.length - 1 - i;
-        posts[ir] = {}
-        posts[ir].title = content[i].data.title;
-        posts[ir].permalink = content[i].data.permalink;
-        posts[ir].id = content[i].data.id;
-      }
-
-      localStorage.setItem('username', user);
-
-      username = localStorage.getItem('username');
-
-      localStorage.setItem('posts' + username, JSON.stringify(posts));
-
-      getFromMemory();
-    });
+    username = data.user;
+    localStorage.setItem('username', data.user);
+    localStorage.setItem('posts' + username, JSON.stringify(posts));
+    getFromMemory();
+  }).catch((err) => {
+    debugger;
+    openErrorMenu("Couldn't get saved posts. Not logged into reddit.");
+  });
 }
 
 function getFromMemory() {
@@ -105,7 +76,7 @@ function getFromMemory() {
 }
 
 function updateCategorized() {
-  tempJSON = {}
+  let tempJSON = {}
 
   //checks if there is any previously saved and categorized posts, that have now been unsaved
   for (var i = 0; i < Object.keys(categorizedPosts).length; i++) {
@@ -285,7 +256,7 @@ function updateView(category) {
 
   }
 
-  d = new Date(localStorage.getItem('lastUpdated' + username));
+  var d = new Date(localStorage.getItem('lastUpdated' + username));
   var minutes = d.getMinutes();
   var hours = d.getHours();
   if (minutes < 10) {
