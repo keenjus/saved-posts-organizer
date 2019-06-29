@@ -58,7 +58,6 @@ function getSavedPostsFromFeed() {
     localStorage.setItem('posts' + username, JSON.stringify(posts));
     getFromMemory();
   }).catch((err) => {
-    debugger;
     openErrorMenu("Couldn't get saved posts. Not logged into reddit.");
   });
 }
