@@ -65,7 +65,6 @@ function getSavedPostsFromFeed() {
           //the most recent saved post is the first element in the JSON, and we want it to be last
           //so we easier can push most recent post to the end of the lists
           var ir = content.length - 1 - i;
-          // console.log(content[ir].data.title);
           posts[ir] = {}
           posts[ir].title = content[i].data.title;
           posts[ir].permalink = content[i].data.permalink;
@@ -208,6 +207,18 @@ function initView(category) {
 
 }
 
+function getPostTitle(post) {
+  return post.link_title || post.title || "";
+}
+
+function createPostElement(post) {
+  const id = post.id;
+  const title = getPostTitle(post).replace(/"/g, "'");
+  const permalink = post.permalink;
+
+  return `<div class="row editPost"><i title="Move post" class="fas fa-edit" id="${id}button"></i><div class="post ${title ? "" : "untitled"}" id="${id}" data-link="${permalink}">${title || "untitled"}</div></div>`;
+}
+
 function updateView(category) {
   // console.log(category);
   lastClickedCategory = category;
@@ -230,10 +241,7 @@ function updateView(category) {
   if (category == "All posts") {
     //adds posts to DOM
     for (var i = 0; i < Object.keys(categorizedPosts).length; i++) {
-      var title = categorizedPosts[i].title.replace(/"/g, "'");
-      var id = categorizedPosts[i].id;
-      var permalink = categorizedPosts[i].permalink;
-      postContainer.innerHTML = postContainer.innerHTML + '<div class="row editPost"><i title="Move post" class="fas fa-edit" id="' + id + 'button"></i><div class="post" id="' + id + '" data-link="' + permalink + '">' + title + '</div></div>';
+      postContainer.innerHTML += createPostElement(categorizedPosts[i]);
     }
 
     //adds onclick listeners to posts
@@ -257,10 +265,7 @@ function updateView(category) {
     //adds posts to DOM
     for (var i = 0; i < Object.keys(categorizedPosts).length; i++) {
       if (categorizedPosts[i].category == category) {
-        var title = categorizedPosts[i].title.replace(/"/g, "'");
-        var id = categorizedPosts[i].id;
-        var permalink = categorizedPosts[i].permalink;
-        postContainer.innerHTML = postContainer.innerHTML + '<div class="row editPost"><i title="Move post" class="fas fa-edit" id="' + id + 'button"></i><div class="post" id="' + id + '" data-link="' + permalink + '">' + title + '</div></div>';
+        postContainer.innerHTML += createPostElement(categorizedPosts[i]);
       }
     }
 

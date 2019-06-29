@@ -4,7 +4,14 @@
   "manifest_version": 2,
 
   "minimum_chrome_version": "46",
-  "content_security_policy": "script-src 'self' 'sha256-WOdSzz11/3cpqOdrm89LBL2UPwEU9EhbDtMy2OciEhs='",
+  "content_security_policy": "script-src 'self' 'sha256-WOdSzz11/3cpqOdrm89LBL2UPwEU9EhbDtMy2OciEhs='; object-src 'self'",
+
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "{F0E456FE-63F6-4265-8719-5D69E598FD75}",
+      "strict_min_version": "57.0"
+    }
+  },
 
   "description": "Lets you display and organize saved posts from your reddit account. You must be logged into reddit on your browser, for the extension to work.",
   "icons": {

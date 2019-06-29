@@ -117,6 +117,12 @@ footer i, header i, .title i, .editPost i, .folder, .post, .confirmDeletion butt
   margin-bottom: 5px;
 }
 
+.post.untitled {
+  opacity: 0.7;
+  background: #ddd;
+  font-weight: bold;
+}
+
 .post:hover {
   text-decoration: underline;
 }

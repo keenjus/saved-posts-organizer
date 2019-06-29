@@ -32,7 +32,6 @@ function getSavedPostsFromFeed() {
 
         for (var i = 0; i < content.length; i++) {
           var ir = content.length - 1 - i;
-          // console.log(content[ir].data.title);
           posts[ir] = {}
           posts[ir].title = content[i].data.title;
           posts[ir].permalink = content[i].data.permalink;
