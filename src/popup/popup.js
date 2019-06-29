@@ -10,9 +10,10 @@ import reddit from "../reddit";
 
 var username = localStorage.getItem('username');
 
-var posts = {}
-var categorizedPosts = {}
+var posts = [];
+var categorizedPosts = [];
 var categories;
+
 var lastClickedCategory = "All posts";
 var inputVisible = false;
 
@@ -45,17 +46,15 @@ function stopLoading() {
 function getSavedPostsFromFeed() {
   startLoading();
 
-  posts = {}
+  posts = [];
 
   reddit.getSavedPosts().then((data) => {
-    posts = data.posts.reduce((prev, curr, index) => {
-      prev[index] = curr;
-      return prev;
-    }, {});
+    posts = data.posts;
 
     username = data.user;
     localStorage.setItem('username', data.user);
     localStorage.setItem('posts' + username, JSON.stringify(posts));
+
     getFromMemory();
   }).catch((err) => {
     openErrorMenu("Couldn't get saved posts. Not logged into reddit.");
@@ -82,52 +81,28 @@ function getFromMemory() {
 }
 
 function updateCategorized() {
-  let tempJSON = {}
+  let tempJSON = [];
 
   //checks if there is any previously saved and categorized posts, that have now been unsaved
-  for (var i = 0; i < Object.keys(categorizedPosts).length; i++) {
-    var postFound = false;
+  for (var i = 0; i < categorizedPosts.length; i++) {
+    const postFound = !!posts.find(p => p.title === categorizedPosts[i].title);
 
-    for (var j = 0; j < Object.keys(posts).length; j++) {
-      if (posts[j]['title'] == categorizedPosts[i]['title']) {
-        var postFound = true;
-        break;
-      } else {
-        continue;
-      }
-    }
-
-    if (postFound) { //adds all matching posts to a temporary array, that will be assigned to categorizedPosts
+    //adds all matching posts to a temporary array, that will be assigned to categorizedPosts
+    if (postFound) {
       tempJSON[i] = categorizedPosts[i];
     }
-
   }
 
   categorizedPosts = tempJSON;
 
   //checks if there is any new saved posts that have not yet been categorized
-  for (var i = 0; i < Object.keys(posts).length; i++) {
-    var postFound = false;
-
-    for (var j = 0; j < Object.keys(categorizedPosts).length; j++) {
-      if (categorizedPosts[j] == undefined) {
-        break;
-      }
-      if (categorizedPosts[j]['title'] == posts[i]['title']) {
-        postFound = true;
-        break;
-      } else {
-        continue;
-      }
-    }
-
+  for (var i = 0; i < posts.length; i++) {
+    var postFound = !!categorizedPosts.find(c => c.title === posts[i].title);
     if (!postFound) {
-      var k = Object.keys(categorizedPosts).length;
+      var k = categorizedPosts.length;
       categorizedPosts[k] = posts[i];
       categorizedPosts[k].category = 'Uncategorized';
     }
-
-
   }
 
   localStorage.setItem('categorizedPosts' + username, JSON.stringify(categorizedPosts));
@@ -140,7 +115,7 @@ function updateCategorized() {
 //sets up the view with categories buttons and default post category (all)
 //should only be called at the start of the session or when adding/deleting a category
 function initView(category) {
-  if (Object.keys(categorizedPosts).length == 0) {
+  if (categorizedPosts.length == 0) {
     return;
   }
 
@@ -150,7 +125,7 @@ function initView(category) {
 
   folders.innerHTML = '<div class="folder" id="all">All posts</div>';
 
-  for (var i = 0; i < Object.keys(categorizedPosts).length; i++) {
+  for (var i = 0; i < categorizedPosts.length; i++) {
     if (!categories.includes(categorizedPosts[i].category)) {
       categorizedPosts[i].category = "Uncategorized";
     }
@@ -211,12 +186,12 @@ function updateView(category) {
 
   if (category == "All posts") {
     //adds posts to DOM
-    for (var i = 0; i < Object.keys(categorizedPosts).length; i++) {
+    for (var i = 0; i < categorizedPosts.length; i++) {
       postContainer.innerHTML += createPostElement(categorizedPosts[i]);
     }
 
     //adds onclick listeners to posts
-    for (var i = 0; i < Object.keys(categorizedPosts).length; i++) {
+    for (var i = 0; i < categorizedPosts.length; i++) {
       var s = categorizedPosts[i].id;
       document.getElementById(categorizedPosts[i].id).addEventListener("click", function () {
         var href = "http://reddit.com" + this.dataset.link;
@@ -225,7 +200,7 @@ function updateView(category) {
     }
 
     //adds onclick listeners to editpost-buttons
-    for (var i = 0; i < Object.keys(categorizedPosts).length; i++) {
+    for (var i = 0; i < categorizedPosts.length; i++) {
       document.getElementById(categorizedPosts[i].id + "button").addEventListener("click", function () {
         editPostCategory(this.id.replace("button", ""));
       });
@@ -234,14 +209,14 @@ function updateView(category) {
   } else {
 
     //adds posts to DOM
-    for (var i = 0; i < Object.keys(categorizedPosts).length; i++) {
+    for (var i = 0; i < categorizedPosts.length; i++) {
       if (categorizedPosts[i].category == category) {
         postContainer.innerHTML += createPostElement(categorizedPosts[i]);
       }
     }
 
     //adds onclick listeners to posts
-    for (var i = 0; i < Object.keys(categorizedPosts).length; i++) {
+    for (var i = 0; i < categorizedPosts.length; i++) {
       if (categorizedPosts[i].category == category) {
         document.getElementById(categorizedPosts[i].id).addEventListener("click", function () {
           var href = "http://reddit.com" + this.dataset.link;
@@ -251,7 +226,7 @@ function updateView(category) {
     }
 
     //adds onclick listeners to editpost-buttons
-    for (var i = 0; i < Object.keys(categorizedPosts).length; i++) {
+    for (var i = 0; i < categorizedPosts.length; i++) {
       if (categorizedPosts[i].category == category) {
         document.getElementById(categorizedPosts[i].id + "button").addEventListener("click", function () {
           editPostCategory(this.id.replace("button", ""));
@@ -303,7 +278,7 @@ function deletionConfirmed(category) {
   }
 
   //moves all posts from the deleted category to "Uncategorized"
-  for (var i = 0; i < Object.keys(categorizedPosts).length; i++) {
+  for (var i = 0; i < categorizedPosts.length; i++) {
     if (categorizedPosts[i].category == category) {
       categorizedPosts[i].category = "Uncategorized";
     }
@@ -341,7 +316,7 @@ function editPostCategory(id) {
 }
 
 function movePost(id, category) {
-  for (var i = 0; i < Object.keys(categorizedPosts).length; i++) {
+  for (var i = 0; i < categorizedPosts.length; i++) {
     if (categorizedPosts[i].id == id) {
       categorizedPosts[i].category = category;
     }
