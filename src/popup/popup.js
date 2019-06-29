@@ -11,7 +11,7 @@ import reddit from "../reddit";
 import CategoryInput from "./categoryInput";
 import UserStorage from './userStorage';
 
-const username = localStorage.getItem('username');
+let username = localStorage.getItem('username');
 
 const $categoryInput = new CategoryInput("#input");
 const storage = new UserStorage(username);
@@ -60,6 +60,7 @@ function getSavedPostsFromFeed() {
 
     updateCategorized();
   }).catch((err) => {
+    debugger;
     openErrorMenu("Couldn't get saved posts. Not logged into reddit.");
   });
 }
