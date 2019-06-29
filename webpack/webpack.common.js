@@ -1,6 +1,7 @@
 const path = require('path');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 const projectRoot = path.join(__dirname, '../');
 
@@ -9,7 +10,10 @@ const distRootPath = path.join(projectRoot, '/dist');
 
 module.exports = {
   entry: {
-    popup: path.join(sourceRootPath, 'popup/popup.js'),
+    popup: [
+      path.join(sourceRootPath, 'popup/popup.js'),
+      path.join(sourceRootPath, 'popup/popup.css'),
+    ],
   },
   output: {
     path: distRootPath,
@@ -25,7 +29,12 @@ module.exports = {
       {
         test: /\.css$/,
         use: [
-          'style-loader',
+          {
+            loader: MiniCssExtractPlugin.loader,
+            options: {
+              hmr: process.env.NODE_ENV === 'development',
+            },
+          },
           'css-loader',
         ],
       },
@@ -35,6 +44,10 @@ module.exports = {
     extensions: ['*', '.js', '.jsx']
   },
   plugins: [
+    new MiniCssExtractPlugin({
+      filename: '[name].css',
+      chunkFilename: '[id].css',
+    }),
     new HtmlWebpackPlugin({
       template: path.join(sourceRootPath, 'popup', 'popup.html'),
       inject: 'body',

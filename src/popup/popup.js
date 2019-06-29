@@ -4,7 +4,6 @@
 // categorizedPosts   : all user's saved posts categorized by themselves
 // categories         : the user's custom categories
 
-import './popup.css';
 import 'babel-polyfill';
 
 import reddit from "../reddit";
@@ -35,8 +34,16 @@ if (localStorage.getItem('categories' + username) != null) {
 document.getElementById("sync").addEventListener("click", getSavedPostsFromFeed);
 document.getElementById("addFolder").addEventListener("click", addFolder);
 
-function getSavedPostsFromFeed() {
+function startLoading() {
   document.getElementById('sync').classList.add("spin");
+}
+
+function stopLoading() {
+  document.getElementById('sync').classList.remove("spin");
+}
+
+function getSavedPostsFromFeed() {
+  startLoading();
 
   posts = {}
 
@@ -265,10 +272,10 @@ function updateView(category) {
   if (hours < 10) {
     hours = "0" + hours;
   }
+
   document.getElementById('lastUpdated').innerHTML = d.getDate() + "/" + (d.getMonth() + 1) + " - " + hours + ":" + minutes;
 
-  document.getElementById('sync').classList.remove("spin");
-
+  stopLoading();
 }
 
 
