@@ -83,7 +83,6 @@ function getSavedPostsFromFeed() {
     });
 }
 
-
 function getFromMemory() {
   if (localStorage.getItem('posts' + username) != null) {
     posts = JSON.parse(localStorage.getItem('posts' + username));
@@ -112,8 +111,8 @@ function updateCategorized() {
 
     for (var j = 0; j < Object.keys(posts).length; j++) {
       if (posts[j]['title'] == categorizedPosts[i]['title']) {
-          var postFound = true;
-          break;
+        var postFound = true;
+        break;
       } else {
         continue;
       }
@@ -127,7 +126,6 @@ function updateCategorized() {
 
   categorizedPosts = tempJSON;
 
-
   //checks if there is any new saved posts that have not yet been categorized
   for (var i = 0; i < Object.keys(posts).length; i++) {
     var postFound = false;
@@ -137,8 +135,8 @@ function updateCategorized() {
         break;
       }
       if (categorizedPosts[j]['title'] == posts[i]['title']) {
-          postFound = true;
-          break;
+        postFound = true;
+        break;
       } else {
         continue;
       }
@@ -154,7 +152,6 @@ function updateCategorized() {
   }
 
   localStorage.setItem('categorizedPosts' + username, JSON.stringify(categorizedPosts));
-  // console.log(JSON.parse(localStorage.getItem('categorizedPosts' + username)));
 
   localStorage.setItem('lastUpdated' + username, new Date());
 
@@ -189,13 +186,13 @@ function initView(category) {
   for (var i = 0; i < categories.length; i++) {
     var s = categories[i];
 
-    document.getElementById(s).addEventListener("click", function() {
+    document.getElementById(s).addEventListener("click", function () {
       updateView(this.id);
     });
   }
 
 
-  document.getElementById("all").addEventListener("click", function() {
+  document.getElementById("all").addEventListener("click", function () {
     updateView("All posts");
   });
 
@@ -216,7 +213,6 @@ function createPostElement(post) {
 }
 
 function updateView(category) {
-  // console.log(category);
   lastClickedCategory = category;
 
   document.getElementById('categoryTitle').innerHTML = category;
@@ -226,7 +222,7 @@ function updateView(category) {
     deleteCategoryButton.style.visibility = "hidden";
   } else {
     deleteCategoryButton.style.visibility = "visible";
-    deleteCategoryButton.onclick = function() {
+    deleteCategoryButton.onclick = function () {
       deleteCategory(category);
     }
   }
@@ -243,15 +239,15 @@ function updateView(category) {
     //adds onclick listeners to posts
     for (var i = 0; i < Object.keys(categorizedPosts).length; i++) {
       var s = categorizedPosts[i].id;
-      document.getElementById(categorizedPosts[i].id).addEventListener("click", function() {
+      document.getElementById(categorizedPosts[i].id).addEventListener("click", function () {
         var href = "http://reddit.com" + this.dataset.link;
-        chrome.tabs.create({active: true, url: href});
+        chrome.tabs.create({ active: true, url: href });
       });
     }
 
     //adds onclick listeners to editpost-buttons
     for (var i = 0; i < Object.keys(categorizedPosts).length; i++) {
-      document.getElementById(categorizedPosts[i].id + "button").addEventListener("click", function() {
+      document.getElementById(categorizedPosts[i].id + "button").addEventListener("click", function () {
         editPostCategory(this.id.replace("button", ""));
       });
     }
@@ -268,9 +264,9 @@ function updateView(category) {
     //adds onclick listeners to posts
     for (var i = 0; i < Object.keys(categorizedPosts).length; i++) {
       if (categorizedPosts[i].category == category) {
-        document.getElementById(categorizedPosts[i].id).addEventListener("click", function() {
+        document.getElementById(categorizedPosts[i].id).addEventListener("click", function () {
           var href = "http://reddit.com" + this.dataset.link;
-          chrome.tabs.create({active: true, url: href});
+          chrome.tabs.create({ active: true, url: href });
         });
       }
     }
@@ -278,7 +274,7 @@ function updateView(category) {
     //adds onclick listeners to editpost-buttons
     for (var i = 0; i < Object.keys(categorizedPosts).length; i++) {
       if (categorizedPosts[i].category == category) {
-        document.getElementById(categorizedPosts[i].id + "button").addEventListener("click", function() {
+        document.getElementById(categorizedPosts[i].id + "button").addEventListener("click", function () {
           editPostCategory(this.id.replace("button", ""));
         });
 
@@ -307,11 +303,11 @@ function deleteCategory(category) {
   document.getElementById('deletedCategory').innerHTML = category;
   document.getElementById('confirmDeletion').style.visibility = "visible";
   document.getElementById('confirmDeletion').style.opacity = 1;
-  document.getElementById("deny").addEventListener("click", function() {
+  document.getElementById("deny").addEventListener("click", function () {
     document.getElementById('confirmDeletion').style.visibility = "hidden";
     document.getElementById('confirmDeletion').style.opacity = 0;
   });
-  document.getElementById("confirm").addEventListener("click", function() {
+  document.getElementById("confirm").addEventListener("click", function () {
     document.getElementById('confirmDeletion').style.visibility = "hidden";
     document.getElementById('confirmDeletion').style.opacity = 0;
     deletionConfirmed(category);
@@ -351,19 +347,18 @@ function editPostCategory(id) {
 
   for (var i = 0; i < categories.length; i++) {
     var s = categories[i];
-    document.getElementById(s + "move").addEventListener("click", function() {
+    document.getElementById(s + "move").addEventListener("click", function () {
       movePost(id, this.id.replace("move", ""));
     });
   }
 
-  document.getElementById('closeMovePostMenu').addEventListener("click", function() {
+  document.getElementById('closeMovePostMenu').addEventListener("click", function () {
     document.getElementById('movePostMenu').style.opacity = 0;
     document.getElementById('movePostMenu').style.visibility = "hidden";
   });
 
   document.getElementById('movePostMenu').style.visibility = "visible";
   document.getElementById('movePostMenu').style.opacity = 1;
-
 }
 
 function movePost(id, category) {
@@ -375,11 +370,7 @@ function movePost(id, category) {
 
   updateView(lastClickedCategory);
 
-  // console.log("before:");
-  // console.log(JSON.parse(localStorage.getItem('categorizedPosts' + username)));
   localStorage.setItem('categorizedPosts' + username, JSON.stringify(categorizedPosts));
-  // console.log("after:");
-  // console.log(JSON.parse(localStorage.getItem('categorizedPosts' + username)));
 
   document.getElementById('movePostMenu').style.opacity = 0;
   document.getElementById('movePostMenu').style.visibility = "hidden";
@@ -401,7 +392,6 @@ function addFolder() {
     if (!categories.includes(input.value)) {
       categories.push(input.value);
       localStorage.setItem('categories' + username, JSON.stringify(categories));
-      // console.log(JSON.parse(localStorage.getItem('categories' + username)));
     }
     initView(lastClickedCategory);
     input.style.width = "0px";
@@ -415,7 +405,7 @@ function addFolder() {
 
 input = document.getElementById('input');
 
-$("input").focusout(function(){
+$("input").focusout(function () {
   if (inputVisible) {
     input.style.width = "0px";
     setTimeout(function () {
@@ -425,7 +415,7 @@ $("input").focusout(function(){
   }
 });
 
-input.addEventListener("keyup",  function(event) {
+input.addEventListener("keyup", function (event) {
   // Number 13 is the "Enter" key on the keyboard
   if (event.keyCode === 13) {
     // Cancel the default action, if needed
