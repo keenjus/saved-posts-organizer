@@ -30,7 +30,7 @@
   ],
 
   "background": {
-    "scripts": ["jquery.js","background.js"]
+    "scripts": ["jquery.js"]
   }
 
 }
