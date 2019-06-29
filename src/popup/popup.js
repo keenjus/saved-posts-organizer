@@ -4,6 +4,8 @@
 // categorizedPosts   : all user's saved posts categorized by themselves
 // categories         : the user's custom categories
 
+import './popup.css';
+
 var username = localStorage.getItem('username');
 
 var posts = {}
@@ -404,15 +406,15 @@ function addFolder() {
 }
 
 input = document.getElementById('input');
+input.addEventListener("focusout", () => {
+  const isInputVisible = input.style.width !== "0px";
+  if (!isInputVisible) return;
 
-$("input").focusout(function () {
-  if (inputVisible) {
-    input.style.width = "0px";
-    setTimeout(function () {
-      input.style.opacity = 0;
-      inputVisible = false;
-    }, 500);
-  }
+  input.style.width = "0px";
+  setTimeout(function () {
+    input.style.opacity = 0;
+    inputVisible = false;
+  }, 500);
 });
 
 input.addEventListener("keyup", function (event) {
