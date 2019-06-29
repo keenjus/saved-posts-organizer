@@ -7,32 +7,20 @@
 import 'babel-polyfill';
 
 import reddit from "../reddit";
+
 import CategoryInput from "./categoryInput";
+import UserStorage from './userStorage';
 
-var username = localStorage.getItem('username');
-
-var posts = [];
-var categorizedPosts = [];
-var categories;
+const username = localStorage.getItem('username');
 
 const $categoryInput = new CategoryInput("#input");
+const storage = new UserStorage(username);
 
 var lastClickedCategory = "All posts";
 
-if (localStorage.getItem('posts' + username) != null) {
-  posts = JSON.parse(localStorage.getItem('posts' + username));
-}
-
-if (localStorage.getItem('categorizedPosts' + username) != null) {
-  categorizedPosts = JSON.parse(localStorage.getItem('categorizedPosts' + username));
-}
-
-if (localStorage.getItem('categories' + username) != null) {
-  categories = JSON.parse(localStorage.getItem('categories' + username));
-} else {
-  categories = ["Uncategorized"];
-  localStorage.setItem('categories' + username, JSON.stringify(categories));
-}
+var posts = storage.getPosts();
+var categorizedPosts = storage.getCategorizedPosts();
+var categories = storage.getCategories();
 
 document.getElementById("sync").addEventListener("click", getSavedPostsFromFeed);
 document.getElementById("addFolder").addEventListener("click", addFolder);
@@ -43,6 +31,19 @@ function startLoading() {
 
 function stopLoading() {
   document.getElementById('sync').classList.remove("spin");
+}
+
+function refreshLastUpdated() {
+  var date = storage.lastUpdated();
+  var minutes = date.getMinutes();
+  var hours = date.getHours();
+  if (minutes < 10) {
+    minutes = "0" + minutes;
+  }
+  if (hours < 10) {
+    hours = "0" + hours;
+  }
+  document.getElementById('lastUpdated').innerHTML = date.getDate() + "/" + (date.getMonth() + 1) + " - " + hours + ":" + minutes;
 }
 
 function getSavedPostsFromFeed() {
@@ -57,30 +58,12 @@ function getSavedPostsFromFeed() {
     localStorage.setItem('username', data.user);
     localStorage.setItem('posts' + username, JSON.stringify(posts));
 
-    getFromMemory();
+    updateCategorized();
   }).catch((err) => {
     openErrorMenu("Couldn't get saved posts. Not logged into reddit.");
   });
 }
 
-function getFromMemory() {
-  if (localStorage.getItem('posts' + username) != null) {
-    posts = JSON.parse(localStorage.getItem('posts' + username));
-  }
-
-  if (localStorage.getItem('categorizedPosts' + username) != null) {
-    categorizedPosts = JSON.parse(localStorage.getItem('categorizedPosts' + username));
-  }
-
-  if (localStorage.getItem('categories' + username) != null) {
-    categories = JSON.parse(localStorage.getItem('categories' + username));
-  } else {
-    categories = ["Uncategorized"];
-    localStorage.setItem('categories' + username, JSON.stringify(categories));
-  }
-
-  updateCategorized();
-}
 
 function updateCategorized() {
   let tempJSON = [];
@@ -107,7 +90,7 @@ function updateCategorized() {
     }
   }
 
-  localStorage.setItem('categorizedPosts' + username, JSON.stringify(categorizedPosts));
+  storage.setCategorizedPosts(categorizedPosts);
 
   localStorage.setItem('lastUpdated' + username, new Date());
 
@@ -239,17 +222,7 @@ function updateView(category) {
 
   }
 
-  var d = new Date(localStorage.getItem('lastUpdated' + username));
-  var minutes = d.getMinutes();
-  var hours = d.getHours();
-  if (minutes < 10) {
-    minutes = "0" + minutes;
-  }
-  if (hours < 10) {
-    hours = "0" + hours;
-  }
-
-  document.getElementById('lastUpdated').innerHTML = d.getDate() + "/" + (d.getMonth() + 1) + " - " + hours + ":" + minutes;
+  refreshLastUpdated();
 
   stopLoading();
 }
@@ -268,7 +241,6 @@ function deleteCategory(category) {
     document.getElementById('confirmDeletion').style.opacity = 0;
     deletionConfirmed(category);
   });
-
 }
 
 function deletionConfirmed(category) {
