@@ -7,6 +7,7 @@
 import 'babel-polyfill';
 
 import reddit from "../reddit";
+import CategoryInput from "./categoryInput";
 
 var username = localStorage.getItem('username');
 
@@ -14,8 +15,9 @@ var posts = [];
 var categorizedPosts = [];
 var categories;
 
+const $categoryInput = new CategoryInput("#input");
+
 var lastClickedCategory = "All posts";
-var inputVisible = false;
 
 if (localStorage.getItem('posts' + username) != null) {
   posts = JSON.parse(localStorage.getItem('posts' + username));
@@ -332,52 +334,26 @@ function movePost(id, category) {
 }
 
 function addFolder() {
-  if (!inputVisible) {
-    input.style.opacity = 1;
-    input.style.width = "260px";
-    setTimeout(function () {
-      input.focus();
-      inputVisible = true;
-    }, 500);
-  } else {
-    if (input.value.length == 0) {
-      return;
-    }
-    if (!categories.includes(input.value)) {
-      categories.push(input.value);
-      localStorage.setItem('categories' + username, JSON.stringify(categories));
-    }
-    initView(lastClickedCategory);
-    input.style.width = "0px";
-    setTimeout(function () {
-      input.style.opacity = 0;
-      input.value = "";
-      inputVisible = false;
-    }, 500);
+  if(!$categoryInput.isVisible) {
+    $categoryInput.show();
+    return;
   }
+
+  const value = $categoryInput.getValue();
+  if (value.length == 0) {
+    return;
+  }
+
+  if (!categories.includes(value)) {
+    categories.push(value);
+    localStorage.setItem('categories' + username, JSON.stringify(categories));
+  }
+
+  initView(lastClickedCategory);
+
+  $categoryInput.hide();
+  $categoryInput.clear();
 }
-
-input = document.getElementById('input');
-input.addEventListener("focusout", () => {
-  const isInputVisible = input.style.width !== "0px";
-  if (!isInputVisible) return;
-
-  input.style.width = "0px";
-  setTimeout(function () {
-    input.style.opacity = 0;
-    inputVisible = false;
-  }, 500);
-});
-
-input.addEventListener("keyup", function (event) {
-  // Number 13 is the "Enter" key on the keyboard
-  if (event.keyCode === 13) {
-    // Cancel the default action, if needed
-    event.preventDefault();
-    // Trigger the button element with a click
-    document.getElementById("addFolder").click();
-  }
-});
 
 function openErrorMenu(message) {
   document.getElementById('errorMessage').innerHTML = message;
@@ -385,5 +361,11 @@ function openErrorMenu(message) {
   document.getElementById('errorMenu').style.opacity = 1;
 }
 
-initView("All posts");
-getSavedPostsFromFeed();
+async function run() {
+  initView("All posts");
+  getSavedPostsFromFeed();
+}
+
+run().catch((err) => {
+  console.error("Something went wrong", err);
+});
