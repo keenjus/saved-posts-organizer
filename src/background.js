@@ -3,55 +3,50 @@ var posts;
 var categorizedPosts = {}
 var categories;
 
+function getRedditFeed(key) {
+  return fetch(`https://www.reddit.com/saved.json?feed=${key}`)
+    .then((res) => res.json())
+    .catch((error) => {
+      console.log("Error: not logged into reddit");
+    });
+}
+
 function getSavedPostsFromFeed() {
   var user;
 
   posts = {}
 
   fetch('https://www.reddit.com/prefs/feeds')
-    .then((res) => {
-      return res.text();
-    })
+    .then((res) => res.text())
     .then((data) => {
       var from = data.search('user=') + 5;
       var to = data.search('">RSS');
       user = data.substring(from, to);
-      // console.log(user);
 
       from = data.search('feed=') + 5;
       to = data.search('&amp;user=');
       var key = data.substring(from, to);
-      // console.log(key);
       return key;
     })
-    .then((key) => {
-      $.getJSON('https://www.reddit.com/saved.json?feed=' + key, function(data) {
-        // console.log(data);
+    .then((key) => getRedditFeed(key))
+    .then((data) => {
+      var content = data.data.children;
 
-        var content = data.data.children;
+      for (var i = 0; i < content.length; i++) {
+        var ir = content.length - 1 - i;
+        posts[ir] = {}
+        posts[ir].title = content[i].data.title;
+        posts[ir].permalink = content[i].data.permalink;
+        posts[ir].id = content[i].data.id;
+      }
 
-        for (var i = 0; i < content.length; i++) {
-          var ir = content.length - 1 - i;
-          posts[ir] = {}
-          posts[ir].title = content[i].data.title;
-          posts[ir].permalink = content[i].data.permalink;
-          posts[ir].id = content[i].data.id;
-        }
+      localStorage.setItem('username', user);
 
-        localStorage.setItem('username', user);
+      username = localStorage.getItem('username');
 
-        username = localStorage.getItem('username');
-        // console.log("Username saved in mem: " + username);
+      localStorage.setItem('posts' + username, JSON.stringify(posts));
 
-        localStorage.setItem('posts' + username, JSON.stringify(posts));
-
-        // console.log(JSON.parse(localStorage.getItem('posts' + username)));
-
-        getFromMemory();
-
-      }).catch((error) => {
-        console.log("Error: not logged into reddit");
-      });
+      getFromMemory();
     });
 }
 
@@ -76,9 +71,6 @@ function updateCategorized() {
   for (var i = 0; i < Object.keys(posts).length; i++) {
     var postFound = false;
 
-    if (true) {
-
-    }
     for (var j = 0; j < Object.keys(categorizedPosts).length; j++) {
 
       if (categorizedPosts[j] == undefined) {
