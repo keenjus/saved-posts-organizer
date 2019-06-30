@@ -71,7 +71,7 @@ function updateCategorized() {
 
   //checks if there is any previously saved and categorized posts, that have now been unsaved
   for (var i = 0; i < categorizedPosts.length; i++) {
-    const postFound = !!posts.find(p => p.title === categorizedPosts[i].title);
+    const postFound = !!posts.find(p => p.id === categorizedPosts[i].id);
 
     //adds all matching posts to a temporary array, that will be assigned to categorizedPosts
     if (postFound) {
@@ -83,7 +83,7 @@ function updateCategorized() {
 
   //checks if there is any new saved posts that have not yet been categorized
   for (var i = 0; i < posts.length; i++) {
-    var postFound = !!categorizedPosts.find(c => c.title === posts[i].title);
+    var postFound = !!categorizedPosts.find(c => c.id === posts[i].id);
     if (!postFound) {
       var k = categorizedPosts.length;
       categorizedPosts[k] = posts[i];
@@ -135,27 +135,32 @@ function initView(category) {
   });
 
   updateView(category);
-
 }
 
-function getPostTitle(post) {
-  return post.link_title || post.title || "";
-}
 
 function createPostElement(post) {
   const id = post.id;
-  const title = getPostTitle(post).replace(/"/g, "'");
+  const title = post.title.replace(/"/g, "'");
   const permalink = post.permalink;
 
-  const html = `<div class="row editPost"><i title="Move post" class="fas fa-edit" id="${id}button"></i><div class="post ${title ? "" : "untitled"}" id="${id}" data-link="${permalink}">${title || "untitled"}</div></div>`;
+  const type = post.type === "t1" ? "(comment)" : ""; 
+
+  const html =
+  `<div class="row editPost">
+    <i title="Move post" class="fas fa-edit"></i>
+    <div id="${id}" class="post ${title ? "" : "untitled"}" data-link="${post.permalink}">${title || "untitled"} ${type}</div>
+  </div>`;
+
+  // Create a wrapper div and inject the html string
   const element = document.createElement("div");
   element.innerHTML = html;
-
+  // Select the first child aka injected html element
   const postElement = element.firstChild;
-
+  
   //adds onclick listeners to posts
   postElement.querySelector(".post").addEventListener("click", function () {
-    var href = "http://reddit.com" + this.dataset.link;
+    const link = this.dataset.link;
+    const href = link.startsWith("/r/") ? "https://www.reddit.com" + link : link;
     chrome.tabs.create({ active: true, url: href });
   });
 
@@ -187,10 +192,12 @@ function updateView(category) {
 
   if (category == "All posts") {
     for (var i = 0; i < categorizedPosts.length; i++) {
+      if(!categorizedPosts[i].title) continue;
       postContainer.appendChild(createPostElement(categorizedPosts[i]));
     }
   } else {
     for (var i = 0; i < categorizedPosts.length; i++) {
+      if(!categorizedPosts[i].title) continue;
       if (categorizedPosts[i].category !== category) continue 
       postContainer.appendChild(createPostElement(categorizedPosts[i]));
     }

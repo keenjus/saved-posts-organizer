@@ -15,11 +15,11 @@ class Reddit {
 
     let savedPostsLink = null;
     jsonFeedLinks.forEach(elem => {
-      if(elem.href.indexOf("saved.json") === -1 || savedPostsLink) return;
+      if (elem.href.indexOf("saved.json") === -1 || savedPostsLink) return;
       savedPostsLink = elem.href;
     });
 
-    if(!savedPostsLink) {
+    if (!savedPostsLink) {
       throw new Error("Could not find saved posts json feed");
     }
 
@@ -38,11 +38,24 @@ class Reddit {
       //traverses from bottom up, but saves first elements last. That is because,
       //the most recent saved post is the first element in the JSON, and we want it to be last
       //so we easier can push most recent post to the end of the lists
+
       const post = {
-        title: content[i].data.title,
-        permalink: content[i].data.permalink,
         id: content[i].data.id,
+        permalink: content[i].data.permalink,
       };
+
+      //tests if the saved element is a post (t3) or a comment (t1)
+      //thanks to 19smitgr for heads up on this issue
+      if (content[i].kind === 't3') {
+        post.title = content[i].data.title;
+        post.type = "t3";
+      } else if (content[i].kind === "t1") {
+        post.title = content[i].data.link_title;
+        post.type = "t1";
+      } else {
+        continue;
+      }
+
       posts.push(post);
     }
 
