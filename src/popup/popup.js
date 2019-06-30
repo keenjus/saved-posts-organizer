@@ -1,6 +1,7 @@
 import 'babel-polyfill';
 
-import store, { dispatch } from '../store';
+import store, { dispatch, actions } from './store';
+import { clearChildren } from "../util";
 
 import CategoryInput from './categoryInput';
 
@@ -39,21 +40,28 @@ function createPostElement(post) {
 }
 
 async function run() {
+  const $username = document.querySelector('#username');
+  const $postContainer = document.querySelector('#postContainer');
+  const $lastUpdated = document.querySelector('#lastUpdated');
+  const $sync = document.querySelector('#sync');
+
+  $sync.addEventListener("click", () => {
+    store.dispatch(actions.sync());
+  }, false);
+
   function renderPosts(state) {
-    const $postContainer = document.querySelector('#postContainer');
+    clearChildren($postContainer);
     for (const post of state.posts) {
       $postContainer.appendChild(createPostElement(post));
     }
   }
 
   function renderUsername(state) {
-    const $username = document.querySelector('#username');
     $username.textContent = state.username;
   }
 
   function renderLastSync(state) {
     const date = state.lastSync;
-    const $lastUpdated = document.querySelector('#lastUpdated');
 
     if (!date) {
       $lastUpdated.textContent = '';
@@ -66,17 +74,15 @@ async function run() {
 
   function render(state) {
     if (state.isLoading) {
-      document.getElementById('sync').classList.add('spin');
+      $sync.classList.add('spin');
     } else {
-      document.getElementById('sync').classList.remove('spin');
+      $sync.classList.remove('spin');
     }
 
     renderUsername(state);
     renderPosts(state);
     renderLastSync(state);
   }
-
-  await dispatch('initialize');
 
   // Initial call
   render(store.getState());
@@ -85,6 +91,8 @@ async function run() {
   store.subscribe(() => {
     render(store.getState());
   });
+
+  store.dispatch(actions.initialize());
 }
 
 run().catch(err => {
