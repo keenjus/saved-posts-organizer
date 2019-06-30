@@ -1,33 +1,39 @@
 import 'babel-polyfill';
 
-import { el } from 'redom';
+import { el, list, mount } from 'redom';
 
 import store, { dispatch, actions } from './store';
 import { clearChildren } from '../util';
 
-function createPostElement(post) {
-  const title = post.title.replace(/"/g, "'");
-  const type = post.type === 't1' ? '(comment)' : '';
-
-  function onPostClick() {
-    const link = post.permalink;
-    const href = link.startsWith('/r/') ? 'https://www.reddit.com' + link : link;
-    chrome.tabs.create({ active: true, url: href });
+class Post {
+  constructor() {
+    this.el = el("div")
   }
 
-  function onPostEdit() {
-    // editPostCategory(id);
+  update(post) {
+    const title = post.title.replace(/"/g, "'");
+    const type = post.type === 't1' ? '(comment)' : '';
+  
+    function onPostClick() {
+      const link = post.permalink;
+      const href = link.startsWith('/r/') ? 'https://www.reddit.com' + link : link;
+      chrome.tabs.create({ active: true, url: href });
+    }
+  
+    function onPostEdit() {
+      // editPostCategory(id);
+    }
+  
+    this.el = el('div.row.editPost',
+      el('i.fas.fa-edit', { title: 'Move post', onclick: onPostEdit }),
+      el('div.post', { textContent: `${title} ${type}`, onclick: onPostClick }),
+    );
   }
-
-  return el('div.row.editPost',
-    el('i.fas.fa-edit', { title: 'Move post', onclick: onPostEdit }),
-    el('div.post', { textContent: `${title} ${type}`, onclick: onPostClick }),
-  );
 }
 
 async function run() {
   const $username = document.querySelector('#username');
-  const $postContainer = document.querySelector('#postContainer');
+  const $postsContainer = document.querySelector('#postContainer');
   const $lastUpdated = document.querySelector('#lastUpdated');
   const $sync = document.querySelector('#sync');
 
@@ -35,11 +41,11 @@ async function run() {
     store.dispatch(actions.sync());
   }, false);
 
+  const postList = list("div", Post);
+  mount($postsContainer, postList);
+
   function renderPosts(state) {
-    clearChildren($postContainer);
-    for (const post of state.posts) {
-      $postContainer.appendChild(createPostElement(post));
-    }
+    postList.update(state.posts);
   }
 
   function renderUsername(state) {
