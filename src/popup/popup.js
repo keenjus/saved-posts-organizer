@@ -1,42 +1,28 @@
 import 'babel-polyfill';
 
+import { el } from 'redom';
+
 import store, { dispatch, actions } from './store';
 import { clearChildren } from '../util';
 
-import CategoryInput from './categoryInput';
-
 function createPostElement(post) {
-  const id = post.id;
   const title = post.title.replace(/"/g, "'");
-  const permalink = post.permalink;
-
   const type = post.type === 't1' ? '(comment)' : '';
 
-  const html = `<div class="row editPost">
-    <i title="Move post" class="fas fa-edit"></i>
-    <div id="${id}" class="post ${title ? '' : 'untitled'}" data-link="${post.permalink}">${title ||
-    'untitled'} ${type}</div>
-  </div>`;
-
-  // Create a wrapper div and inject the html string
-  const element = document.createElement('div');
-  element.innerHTML = html;
-  // Select the first child aka injected html element
-  const postElement = element.firstChild;
-
-  //adds onclick listeners to posts
-  postElement.querySelector('.post').addEventListener('click', function() {
-    const link = this.dataset.link;
+  function onPostClick() {
+    const link = post.permalink;
     const href = link.startsWith('/r/') ? 'https://www.reddit.com' + link : link;
     chrome.tabs.create({ active: true, url: href });
-  });
+  }
 
-  //adds onclick listeners to editpost-buttons
-  postElement.querySelector('.fa-edit').addEventListener('click', function() {
-    editPostCategory(id);
-  });
+  function onPostEdit() {
+    // editPostCategory(id);
+  }
 
-  return postElement;
+  return el('div.row.editPost',
+    el('i.fas.fa-edit', { title: 'Move post', onclick: onPostEdit }),
+    el('div.post', { textContent: `${title} ${type}`, onclick: onPostClick }),
+  );
 }
 
 async function run() {
@@ -46,7 +32,7 @@ async function run() {
   const $sync = document.querySelector('#sync');
 
   $sync.addEventListener('click', () => {
-      store.dispatch(actions.sync());
+    store.dispatch(actions.sync());
   }, false);
 
   function renderPosts(state) {

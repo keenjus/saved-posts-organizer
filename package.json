@@ -28,6 +28,7 @@
   "dependencies": {
     "babel-polyfill": "^6.26.0",
     "query-string": "^6.8.1",
+    "redom": "^3.24.0",
     "redux": "^4.0.1",
     "redux-thunk": "^2.3.0"
   }
