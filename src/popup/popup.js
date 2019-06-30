@@ -1,7 +1,6 @@
 // Local storages:
 // username           : the user's reddit username
 // posts              : all user's saved posts
-// categorizedPosts   : all user's saved posts categorized by themselves
 // categories         : the user's custom categories
 
 import 'babel-polyfill';
@@ -19,7 +18,6 @@ const storage = new UserStorage(username);
 var lastClickedCategory = 'All posts';
 
 var posts = storage.getPosts();
-var categorizedPosts = storage.getCategorizedPosts();
 var categories = storage.getCategories();
 
 document.getElementById('sync').addEventListener('click', getSavedPostsFromFeed);
@@ -49,58 +47,40 @@ function refreshLastUpdated() {
 function getSavedPostsFromFeed() {
   startLoading();
 
-  posts = [];
-
   reddit
     .getSavedPosts()
     .then(data => {
-      posts = data.posts;
+      // Get the saved posts from reddit api
+      const savedPosts = data.posts;
+
+      // Find new posts
+      const newSavedPosts = savedPosts.filter(p => !posts.find(x => x.id === p.id));
+      // Find deleted posts
+      const deletedSavedPosts = posts.filter(p => !savedPosts.find(x => x.id === p.id));
+
+      // Remove deleted posts from local array
+      for (const deletedPost of deletedSavedPosts) {
+        posts.splice(posts.indexOf(deletedPost), 1);
+      }
+
+      // Add new posts to local array
+      posts.push(...newSavedPosts);
+      storage.setPosts(posts);
 
       username = data.user;
       localStorage.setItem('username', data.user);
-      storage.setPosts(posts);
 
-      updateCategorized();
+      initView(lastClickedCategory);
     })
     .catch(err => {
       openErrorMenu("Couldn't get saved posts. Not logged into reddit.");
     });
 }
 
-function updateCategorized() {
-  let tempJSON = [];
-
-  //checks if there is any previously saved and categorized posts, that have now been unsaved
-  for (var i = 0; i < categorizedPosts.length; i++) {
-    const postFound = !!posts.find(p => p.id === categorizedPosts[i].id);
-
-    //adds all matching posts to a temporary array, that will be assigned to categorizedPosts
-    if (postFound) {
-      tempJSON[i] = categorizedPosts[i];
-    }
-  }
-
-  categorizedPosts = tempJSON;
-
-  //checks if there is any new saved posts that have not yet been categorized
-  for (var i = 0; i < posts.length; i++) {
-    var postFound = !!categorizedPosts.find(c => c.id === posts[i].id);
-    if (!postFound) {
-      var k = categorizedPosts.length;
-      categorizedPosts[k] = posts[i];
-      categorizedPosts[k].category = 'Uncategorized';
-    }
-  }
-
-  storage.setCategorizedPosts(categorizedPosts);
-
-  initView(lastClickedCategory);
-}
-
 //sets up the view with categories buttons and default post category (all)
 //should only be called at the start of the session or when adding/deleting a category
 function initView(category) {
-  if (categorizedPosts.length == 0) {
+  if (posts.length == 0) {
     return;
   }
 
@@ -110,24 +90,14 @@ function initView(category) {
 
   folders.innerHTML = '<div class="folder" id="all">All posts</div>';
 
-  for (var i = 0; i < categorizedPosts.length; i++) {
-    if (!categories.includes(categorizedPosts[i].category)) {
-      categorizedPosts[i].category = 'Uncategorized';
+  for (var i = 0; i < posts.length; i++) {
+    if (!categories.includes(posts[i].category)) {
+      posts[i].category = 'Uncategorized';
     }
   }
 
   for (var i = 0; i < categories.length; i++) {
-    var s = categories[i];
-
-    folders.innerHTML = folders.innerHTML + '<div class="folder" id="' + s + '">' + s + '</div>';
-  }
-
-  for (var i = 0; i < categories.length; i++) {
-    var s = categories[i];
-
-    document.getElementById(s).addEventListener('click', function() {
-      updateView(this.id);
-    });
+    folders.appendChild(createCategoryElement(categories[i], categoryName => updateView(categoryName)));
   }
 
   document.getElementById('all').addEventListener('click', function() {
@@ -135,6 +105,18 @@ function initView(category) {
   });
 
   updateView(category);
+}
+
+function createCategoryElement(categoryName, onClick) {
+  const html = `<div class="folder" id="${categoryName}">${categoryName}</div>`;
+
+  const element = document.createElement('div');
+  element.innerHTML = html;
+  const categoryElement = element.firstChild;
+
+  categoryElement.addEventListener('click', () => onClick(categoryName));
+
+  return categoryElement;
 }
 
 function createPostElement(post) {
@@ -165,7 +147,7 @@ function createPostElement(post) {
 
   //adds onclick listeners to editpost-buttons
   postElement.querySelector('.fa-edit').addEventListener('click', function() {
-    editPostCategory(this.id.replace('button', ''));
+    editPostCategory(id);
   });
 
   return postElement;
@@ -190,15 +172,15 @@ function updateView(category) {
   postContainer.innerHTML = '';
 
   if (category == 'All posts') {
-    for (var i = 0; i < categorizedPosts.length; i++) {
-      if (!categorizedPosts[i].title) continue;
-      postContainer.appendChild(createPostElement(categorizedPosts[i]));
+    for (const post of posts) {
+      if (!post.title) continue;
+      postContainer.appendChild(createPostElement(post));
     }
   } else {
-    for (var i = 0; i < categorizedPosts.length; i++) {
-      if (!categorizedPosts[i].title) continue;
-      if (categorizedPosts[i].category !== category) continue;
-      postContainer.appendChild(createPostElement(categorizedPosts[i]));
+    for (const post of posts) {
+      if (!post.title) continue;
+      if (post.category !== category) continue;
+      postContainer.appendChild(createPostElement(post));
     }
   }
 
@@ -224,16 +206,12 @@ function deleteCategory(category) {
 
 function deletionConfirmed(category) {
   //deletes category from categories array
-  for (var i = 0; i < categories.length; i++) {
-    if (categories[i] == category) {
-      categories.splice(i, 1);
-    }
-  }
+  categories.splice(categories.indexOf(category), 1);
 
   //moves all posts from the deleted category to "Uncategorized"
-  for (var i = 0; i < categorizedPosts.length; i++) {
-    if (categorizedPosts[i].category == category) {
-      categorizedPosts[i].category = 'Uncategorized';
+  for (const post of posts) {
+    if (post.category === category) {
+      post.category = 'Uncategorized';
     }
   }
 
@@ -248,16 +226,7 @@ function editPostCategory(id) {
   foldersMovePostMenu.innerHTML = '';
 
   for (var i = 0; i < categories.length; i++) {
-    var s = categories[i];
-    foldersMovePostMenu.innerHTML =
-      foldersMovePostMenu.innerHTML + '<div class="folder" id="' + s + 'move">' + s + '</div>';
-  }
-
-  for (var i = 0; i < categories.length; i++) {
-    var s = categories[i];
-    document.getElementById(s + 'move').addEventListener('click', function() {
-      movePost(id, this.id.replace('move', ''));
-    });
+    foldersMovePostMenu.appendChild(createCategoryElement(categories[i], categoryName => movePost(id, categoryName)));
   }
 
   document.getElementById('closeMovePostMenu').addEventListener('click', function() {
@@ -270,15 +239,14 @@ function editPostCategory(id) {
 }
 
 function movePost(id, category) {
-  for (var i = 0; i < categorizedPosts.length; i++) {
-    if (categorizedPosts[i].id == id) {
-      categorizedPosts[i].category = category;
-    }
+  const post = posts.find(p => p.id === id);
+  if (post) {
+    post.category = category;
   }
 
   updateView(lastClickedCategory);
 
-  storage.setCategorizedPosts(categorizedPosts);
+  storage.setPosts(posts);
 
   document.getElementById('movePostMenu').style.opacity = 0;
   document.getElementById('movePostMenu').style.visibility = 'hidden';
@@ -318,5 +286,6 @@ async function run() {
 }
 
 run().catch(err => {
+  debugger;
   console.error('Something went wrong', err);
 });

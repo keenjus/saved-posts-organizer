@@ -11,18 +11,9 @@ class UserStorage {
   }
   setPosts(posts) {
     localStorage.setItem(this.wrapKey('posts'), JSON.stringify(posts || []));
-  }
-
-  getCategorizedPosts() {
-    const categorizedPosts = localStorage.getItem(this.wrapKey('categorizedPosts'));
-    if (!categorizedPosts) return [];
-
-    return JSON.parse(categorizedPosts);
-  }
-  setCategorizedPosts(categorizedPosts) {
-    localStorage.setItem(this.wrapKey('categorizedPosts'), JSON.stringify(categorizedPosts || []));
     localStorage.setItem(this.wrapKey('lastUpdated'), new Date());
   }
+
 
   getCategories() {
     const categories = localStorage.getItem(this.wrapKey('categories'));
