@@ -10,8 +10,7 @@ export default class CategoryInput {
     if (this.isVisible) return;
 
     this.$categoryInput.style.opacity = 1;
-    this.$categoryInput.style.width = "260px";
-
+    this.$categoryInput.style.width = '260px';
 
     setTimeout(() => {
       this.$categoryInput.focus();
@@ -22,7 +21,7 @@ export default class CategoryInput {
   hide() {
     if (!this.isVisible) return;
 
-    this.$categoryInput.style.width = "0px";
+    this.$categoryInput.style.width = '0px';
 
     setTimeout(() => {
       this.$categoryInput.style.opacity = 0;
@@ -31,7 +30,7 @@ export default class CategoryInput {
   }
 
   clear() {
-    this.$categoryInput.value = "";
+    this.$categoryInput.value = '';
   }
 
   getValue() {
@@ -39,15 +38,15 @@ export default class CategoryInput {
   }
 
   registerListeners() {
-    this.$categoryInput.addEventListener("focusout", () => this.hide());
+    this.$categoryInput.addEventListener('focusout', () => this.hide());
 
-    this.$categoryInput.addEventListener("keyup", (event) => {
+    this.$categoryInput.addEventListener('keyup', event => {
       // Number 13 is the "Enter" key on the keyboard
       if (event.keyCode !== 13) return;
       // Cancel the default action, if needed
       event.preventDefault();
       // Trigger the button element with a click
-      document.getElementById("addFolder").click();
+      document.getElementById('addFolder').click();
     });
   }
 }

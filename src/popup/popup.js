@@ -6,44 +6,44 @@
 
 import 'babel-polyfill';
 
-import reddit from "../reddit";
+import reddit from '../reddit';
 
-import CategoryInput from "./categoryInput";
+import CategoryInput from './categoryInput';
 import UserStorage from './userStorage';
 
 let username = localStorage.getItem('username');
 
-const $categoryInput = new CategoryInput("#input");
+const $categoryInput = new CategoryInput('#input');
 const storage = new UserStorage(username);
 
-var lastClickedCategory = "All posts";
+var lastClickedCategory = 'All posts';
 
 var posts = storage.getPosts();
 var categorizedPosts = storage.getCategorizedPosts();
 var categories = storage.getCategories();
 
-document.getElementById("sync").addEventListener("click", getSavedPostsFromFeed);
-document.getElementById("addFolder").addEventListener("click", addFolder);
+document.getElementById('sync').addEventListener('click', getSavedPostsFromFeed);
+document.getElementById('addFolder').addEventListener('click', addFolder);
 
 function startLoading() {
-  document.getElementById('sync').classList.add("spin");
+  document.getElementById('sync').classList.add('spin');
 }
 
 function stopLoading() {
-  document.getElementById('sync').classList.remove("spin");
+  document.getElementById('sync').classList.remove('spin');
 }
 
 function refreshLastUpdated() {
-  var date = storage.lastUpdated();
-  var minutes = date.getMinutes();
-  var hours = date.getHours();
+  const date = storage.lastUpdated();
+  const minutes = date.getMinutes().toString();
+  const hours = date.getHours().toString();
   if (minutes < 10) {
-    minutes = "0" + minutes;
+    minutes = '0' + minutes;
   }
   if (hours < 10) {
-    hours = "0" + hours;
+    hours = '0' + hours;
   }
-  document.getElementById('lastUpdated').innerHTML = date.getDate() + "/" + (date.getMonth() + 1) + " - " + hours + ":" + minutes;
+  document.getElementById('lastUpdated').innerHTML = `${date.getDate()}/${date.getMonth() + 1} - ${hours}:${minutes}`;
 }
 
 function getSavedPostsFromFeed() {
@@ -51,20 +51,21 @@ function getSavedPostsFromFeed() {
 
   posts = [];
 
-  reddit.getSavedPosts().then((data) => {
-    posts = data.posts;
+  reddit
+    .getSavedPosts()
+    .then(data => {
+      posts = data.posts;
 
-    username = data.user;
-    localStorage.setItem('username', data.user);
-    storage.setPosts(posts);
+      username = data.user;
+      localStorage.setItem('username', data.user);
+      storage.setPosts(posts);
 
-    updateCategorized();
-  }).catch((err) => {
-    debugger;
-    openErrorMenu("Couldn't get saved posts. Not logged into reddit.");
-  });
+      updateCategorized();
+    })
+    .catch(err => {
+      openErrorMenu("Couldn't get saved posts. Not logged into reddit.");
+    });
 }
-
 
 function updateCategorized() {
   let tempJSON = [];
@@ -111,7 +112,7 @@ function initView(category) {
 
   for (var i = 0; i < categorizedPosts.length; i++) {
     if (!categories.includes(categorizedPosts[i].category)) {
-      categorizedPosts[i].category = "Uncategorized";
+      categorizedPosts[i].category = 'Uncategorized';
     }
   }
 
@@ -124,49 +125,47 @@ function initView(category) {
   for (var i = 0; i < categories.length; i++) {
     var s = categories[i];
 
-    document.getElementById(s).addEventListener("click", function () {
+    document.getElementById(s).addEventListener('click', function() {
       updateView(this.id);
     });
   }
 
-
-  document.getElementById("all").addEventListener("click", function () {
-    updateView("All posts");
+  document.getElementById('all').addEventListener('click', function() {
+    updateView('All posts');
   });
 
   updateView(category);
 }
-
 
 function createPostElement(post) {
   const id = post.id;
   const title = post.title.replace(/"/g, "'");
   const permalink = post.permalink;
 
-  const type = post.type === "t1" ? "(comment)" : ""; 
+  const type = post.type === 't1' ? '(comment)' : '';
 
-  const html =
-  `<div class="row editPost">
+  const html = `<div class="row editPost">
     <i title="Move post" class="fas fa-edit"></i>
-    <div id="${id}" class="post ${title ? "" : "untitled"}" data-link="${post.permalink}">${title || "untitled"} ${type}</div>
+    <div id="${id}" class="post ${title ? '' : 'untitled'}" data-link="${post.permalink}">${title ||
+    'untitled'} ${type}</div>
   </div>`;
 
   // Create a wrapper div and inject the html string
-  const element = document.createElement("div");
+  const element = document.createElement('div');
   element.innerHTML = html;
   // Select the first child aka injected html element
   const postElement = element.firstChild;
-  
+
   //adds onclick listeners to posts
-  postElement.querySelector(".post").addEventListener("click", function () {
+  postElement.querySelector('.post').addEventListener('click', function() {
     const link = this.dataset.link;
-    const href = link.startsWith("/r/") ? "https://www.reddit.com" + link : link;
+    const href = link.startsWith('/r/') ? 'https://www.reddit.com' + link : link;
     chrome.tabs.create({ active: true, url: href });
   });
 
   //adds onclick listeners to editpost-buttons
-  postElement.querySelector(".fa-edit").addEventListener("click", function () {
-    editPostCategory(this.id.replace("button", ""));
+  postElement.querySelector('.fa-edit').addEventListener('click', function() {
+    editPostCategory(this.id.replace('button', ''));
   });
 
   return postElement;
@@ -178,27 +177,27 @@ function updateView(category) {
   document.getElementById('categoryTitle').innerHTML = category;
 
   var deleteCategoryButton = document.getElementById('deleteCategory');
-  if (category == "All posts" || category == "Uncategorized") {
-    deleteCategoryButton.style.visibility = "hidden";
+  if (category == 'All posts' || category == 'Uncategorized') {
+    deleteCategoryButton.style.visibility = 'hidden';
   } else {
-    deleteCategoryButton.style.visibility = "visible";
-    deleteCategoryButton.onclick = function () {
+    deleteCategoryButton.style.visibility = 'visible';
+    deleteCategoryButton.onclick = function() {
       deleteCategory(category);
-    }
+    };
   }
 
   postContainer = document.getElementById('postContainer');
-  postContainer.innerHTML = "";
+  postContainer.innerHTML = '';
 
-  if (category == "All posts") {
+  if (category == 'All posts') {
     for (var i = 0; i < categorizedPosts.length; i++) {
-      if(!categorizedPosts[i].title) continue;
+      if (!categorizedPosts[i].title) continue;
       postContainer.appendChild(createPostElement(categorizedPosts[i]));
     }
   } else {
     for (var i = 0; i < categorizedPosts.length; i++) {
-      if(!categorizedPosts[i].title) continue;
-      if (categorizedPosts[i].category !== category) continue 
+      if (!categorizedPosts[i].title) continue;
+      if (categorizedPosts[i].category !== category) continue;
       postContainer.appendChild(createPostElement(categorizedPosts[i]));
     }
   }
@@ -208,17 +207,16 @@ function updateView(category) {
   stopLoading();
 }
 
-
 function deleteCategory(category) {
   document.getElementById('deletedCategory').innerHTML = category;
-  document.getElementById('confirmDeletion').style.visibility = "visible";
+  document.getElementById('confirmDeletion').style.visibility = 'visible';
   document.getElementById('confirmDeletion').style.opacity = 1;
-  document.getElementById("deny").addEventListener("click", function () {
-    document.getElementById('confirmDeletion').style.visibility = "hidden";
+  document.getElementById('deny').addEventListener('click', function() {
+    document.getElementById('confirmDeletion').style.visibility = 'hidden';
     document.getElementById('confirmDeletion').style.opacity = 0;
   });
-  document.getElementById("confirm").addEventListener("click", function () {
-    document.getElementById('confirmDeletion').style.visibility = "hidden";
+  document.getElementById('confirm').addEventListener('click', function() {
+    document.getElementById('confirmDeletion').style.visibility = 'hidden';
     document.getElementById('confirmDeletion').style.opacity = 0;
     deletionConfirmed(category);
   });
@@ -235,38 +233,39 @@ function deletionConfirmed(category) {
   //moves all posts from the deleted category to "Uncategorized"
   for (var i = 0; i < categorizedPosts.length; i++) {
     if (categorizedPosts[i].category == category) {
-      categorizedPosts[i].category = "Uncategorized";
+      categorizedPosts[i].category = 'Uncategorized';
     }
   }
 
   storage.setCategories(categories);
 
-  initView("All posts");
+  initView('All posts');
 }
 
 function editPostCategory(id) {
   var foldersMovePostMenu = document.getElementById('foldersMovePostMenu');
 
-  foldersMovePostMenu.innerHTML = "";
+  foldersMovePostMenu.innerHTML = '';
 
   for (var i = 0; i < categories.length; i++) {
     var s = categories[i];
-    foldersMovePostMenu.innerHTML = foldersMovePostMenu.innerHTML + '<div class="folder" id="' + s + 'move">' + s + '</div>';
+    foldersMovePostMenu.innerHTML =
+      foldersMovePostMenu.innerHTML + '<div class="folder" id="' + s + 'move">' + s + '</div>';
   }
 
   for (var i = 0; i < categories.length; i++) {
     var s = categories[i];
-    document.getElementById(s + "move").addEventListener("click", function () {
-      movePost(id, this.id.replace("move", ""));
+    document.getElementById(s + 'move').addEventListener('click', function() {
+      movePost(id, this.id.replace('move', ''));
     });
   }
 
-  document.getElementById('closeMovePostMenu').addEventListener("click", function () {
+  document.getElementById('closeMovePostMenu').addEventListener('click', function() {
     document.getElementById('movePostMenu').style.opacity = 0;
-    document.getElementById('movePostMenu').style.visibility = "hidden";
+    document.getElementById('movePostMenu').style.visibility = 'hidden';
   });
 
-  document.getElementById('movePostMenu').style.visibility = "visible";
+  document.getElementById('movePostMenu').style.visibility = 'visible';
   document.getElementById('movePostMenu').style.opacity = 1;
 }
 
@@ -282,12 +281,11 @@ function movePost(id, category) {
   storage.setCategorizedPosts(categorizedPosts);
 
   document.getElementById('movePostMenu').style.opacity = 0;
-  document.getElementById('movePostMenu').style.visibility = "hidden";
-
+  document.getElementById('movePostMenu').style.visibility = 'hidden';
 }
 
 function addFolder() {
-  if(!$categoryInput.isVisible) {
+  if (!$categoryInput.isVisible) {
     $categoryInput.show();
     return;
   }
@@ -310,15 +308,15 @@ function addFolder() {
 
 function openErrorMenu(message) {
   document.getElementById('errorMessage').innerHTML = message;
-  document.getElementById('errorMenu').style.visibility = "visible";
+  document.getElementById('errorMenu').style.visibility = 'visible';
   document.getElementById('errorMenu').style.opacity = 1;
 }
 
 async function run() {
-  initView("All posts");
+  initView('All posts');
   getSavedPostsFromFeed();
 }
 
-run().catch((err) => {
-  console.error("Something went wrong", err);
+run().catch(err => {
+  console.error('Something went wrong', err);
 });

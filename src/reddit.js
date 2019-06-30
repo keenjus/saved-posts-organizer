@@ -1,26 +1,26 @@
-import queryString from "query-string";
+import queryString from 'query-string';
 
 class Reddit {
   getRedditFeed(key) {
-    return fetch(`https://www.reddit.com/saved.json?feed=${key}`).then((res) => res.json());
+    return fetch(`https://www.reddit.com/saved.json?feed=${key}`).then(res => res.json());
   }
 
   async getUserAndFeedKey() {
-    const feedHtml = await fetch('https://www.reddit.com/prefs/feeds').then((res) => res.text());
+    const feedHtml = await fetch('https://www.reddit.com/prefs/feeds').then(res => res.text());
 
     const parser = new DOMParser();
     const wrapper = parser.parseFromString(feedHtml, 'text/html');
 
-    const jsonFeedLinks = wrapper.querySelectorAll("a.feedlink.json-link");
+    const jsonFeedLinks = wrapper.querySelectorAll('a.feedlink.json-link');
 
     let savedPostsLink = null;
     jsonFeedLinks.forEach(elem => {
-      if (elem.href.indexOf("saved.json") === -1 || savedPostsLink) return;
+      if (elem.href.indexOf('saved.json') === -1 || savedPostsLink) return;
       savedPostsLink = elem.href;
     });
 
     if (!savedPostsLink) {
-      throw new Error("Could not find saved posts json feed");
+      throw new Error('Could not find saved posts json feed');
     }
 
     return queryString.parseUrl(savedPostsLink).query;
@@ -48,10 +48,10 @@ class Reddit {
       //thanks to 19smitgr for heads up on this issue
       if (content[i].kind === 't3') {
         post.title = content[i].data.title;
-        post.type = "t3";
-      } else if (content[i].kind === "t1") {
+        post.type = 't3';
+      } else if (content[i].kind === 't1') {
         post.title = content[i].data.link_title;
-        post.type = "t1";
+        post.type = 't1';
       } else {
         continue;
       }
