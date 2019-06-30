@@ -1,7 +1,7 @@
 import 'babel-polyfill';
 
 import store, { dispatch, actions } from './store';
-import { clearChildren } from "../util";
+import { clearChildren } from '../util';
 
 import CategoryInput from './categoryInput';
 
@@ -45,8 +45,8 @@ async function run() {
   const $lastUpdated = document.querySelector('#lastUpdated');
   const $sync = document.querySelector('#sync');
 
-  $sync.addEventListener("click", () => {
-    store.dispatch(actions.sync());
+  $sync.addEventListener('click', () => {
+      store.dispatch(actions.sync());
   }, false);
 
   function renderPosts(state) {
